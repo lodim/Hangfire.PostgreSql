@@ -26,7 +26,7 @@ using Dapper;
 using Hangfire.Logging;
 using Hangfire.Server;
 
-namespace Hangfire.PostgreSql
+namespace Hangfire.PostgreSql.Reboot
 {
     internal class ExpirationManager : IServerComponent
     {

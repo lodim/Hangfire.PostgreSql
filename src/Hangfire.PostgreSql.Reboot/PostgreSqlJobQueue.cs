@@ -28,7 +28,7 @@ using Hangfire.PostgreSql.Annotations;
 using Hangfire.Storage;
 using Npgsql;
 
-namespace Hangfire.PostgreSql
+namespace Hangfire.PostgreSql.Reboot
 {
     internal class PostgreSqlJobQueue : IPersistentJobQueue
     {

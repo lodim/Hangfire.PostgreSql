@@ -1,4 +1,5 @@
 ﻿using System;
+using Hangfire.PostgreSql.Reboot;
 using Xunit;
 
 namespace Hangfire.PostgreSql.Tests

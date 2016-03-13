@@ -24,7 +24,7 @@ using System.Data;
 using System.Linq;
 using Dapper;
 
-namespace Hangfire.PostgreSql
+namespace Hangfire.PostgreSql.Reboot
 {
     internal class PostgreSqlJobQueueMonitoringApi : IPersistentJobQueueMonitoringApi
     {

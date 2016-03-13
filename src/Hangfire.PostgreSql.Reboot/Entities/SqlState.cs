@@ -20,7 +20,7 @@
 
 using System;
 
-namespace Hangfire.PostgreSql.Entities
+namespace Hangfire.PostgreSql.Reboot.Entities
 {
     internal class SqlState
     {

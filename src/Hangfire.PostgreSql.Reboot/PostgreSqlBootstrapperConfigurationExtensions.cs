@@ -18,7 +18,7 @@
 //   
 //    Special thanks goes to them.
 
-namespace Hangfire.PostgreSql
+namespace Hangfire.PostgreSql.Reboot
 {
     public static class PostgreSqlBootstrapperConfigurationExtensions
     {

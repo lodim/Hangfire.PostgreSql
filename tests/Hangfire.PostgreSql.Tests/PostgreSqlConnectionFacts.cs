@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using Dapper;
 using Hangfire.Common;
+using Hangfire.PostgreSql.Reboot;
 using Hangfire.Server;
 using Hangfire.Storage;
 using Moq;

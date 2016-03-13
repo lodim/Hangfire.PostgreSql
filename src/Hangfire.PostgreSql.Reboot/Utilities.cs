@@ -20,7 +20,7 @@
 
 using System;
 
-namespace Hangfire.PostgreSql
+namespace Hangfire.PostgreSql.Reboot
 {
     public static class Utilities
     {
@@ -30,7 +30,7 @@ namespace Hangfire.PostgreSql
             int? tryCount = default(int?))
         {
             object futile;
-            return TryExecute(() => { action(); return null; }, out futile, smoothExValidator, tryCount);
+            return Utilities.TryExecute(() => { action(); return null; }, out futile, smoothExValidator, tryCount);
         }
 
         public static bool TryExecute<T>(

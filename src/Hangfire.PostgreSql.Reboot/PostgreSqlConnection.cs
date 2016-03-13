@@ -26,12 +26,12 @@ using System.Linq;
 using System.Threading;
 using Dapper;
 using Hangfire.Common;
-using Hangfire.PostgreSql.Entities;
+using Hangfire.PostgreSql.Reboot.Entities;
 using Hangfire.Server;
 using Hangfire.Storage;
 using Npgsql;
 
-namespace Hangfire.PostgreSql
+namespace Hangfire.PostgreSql.Reboot
 {
     internal class PostgreSqlConnection : IStorageConnection
     {

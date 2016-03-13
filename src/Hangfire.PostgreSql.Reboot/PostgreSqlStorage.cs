@@ -27,7 +27,7 @@ using Hangfire.Server;
 using Hangfire.Storage;
 using Npgsql;
 
-namespace Hangfire.PostgreSql
+namespace Hangfire.PostgreSql.Reboot
 {
     public class PostgreSqlStorage : JobStorage
     {

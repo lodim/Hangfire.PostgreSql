@@ -27,7 +27,7 @@ using System.Reflection;
 using Hangfire.Logging;
 using Npgsql;
 
-namespace Hangfire.PostgreSql
+namespace Hangfire.PostgreSql.Reboot
 {
     [ExcludeFromCodeCoverage]
     internal static class PostgreSqlObjectsInstaller
@@ -50,7 +50,7 @@ namespace Hangfire.PostgreSql
                 {
                     var script = GetStringResource(
                         typeof (PostgreSqlObjectsInstaller).Assembly,
-                        $"Hangfire.PostgreSql.Install.v{version.ToString(CultureInfo.InvariantCulture)}.sql");
+                        $"Hangfire.PostgreSql.Reboot.Install.v{version.ToString(CultureInfo.InvariantCulture)}.sql");
                     if (schemaName != "hangfire")
                     {
                         script = script.Replace("'hangfire'", $"'{schemaName}'")

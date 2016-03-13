@@ -18,13 +18,16 @@
 //   
 //    Special thanks goes to them.
 
-using System.Data;
+using System;
 
-namespace Hangfire.PostgreSql
+namespace Hangfire.PostgreSql.Reboot.Entities
 {
-    public interface IPersistentJobQueueProvider
+    internal class SqlHash
     {
-        IPersistentJobQueue GetJobQueue(IDbConnection connection);
-        IPersistentJobQueueMonitoringApi GetJobQueueMonitoringApi(IDbConnection connection);
+        public int Id { get; set; }
+        public string Key { get; set; }
+        public string Field { get; set; }
+        public string Value { get; set; }
+        public DateTime? ExpireAt { get; set; }
     }
 }

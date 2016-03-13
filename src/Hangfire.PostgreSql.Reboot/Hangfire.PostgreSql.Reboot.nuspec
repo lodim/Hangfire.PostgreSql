@@ -1,0 +1,32 @@
+﻿<?xml version="1.0"?>
+<package >
+	<metadata>
+		<id>Hangfire.PostgreSql.Reboot</id>
+		<title>Hangfire.PostgreSql.Reboot</title>
+		<authors>Mihai Bogdan Eugen</authors>
+		<owners>Mihai Bogdan Eugen</owners>
+		<version>1.0.0</version>
+		<projectUrl>https://github.com/MihaiBogdanEugen/Hangfire.PostgreSql</projectUrl>
+		<licenseUrl>https://github.com/MihaiBogdanEugen/Hangfire.PostgreSql/blob/master/LICENSE.md</licenseUrl>
+		<tags>Hangfire PostgreSql AspNet MVC OWIN SqlServer Long-Running Background Fire-And-Forget Delayed Recurring Tasks Jobs Scheduler Threading Queues</tags>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<language>en-US</language>
+		<description>PostgreSql storage implementation for Hangfire (background job system for ASP.NET applications).</description>
+		<summary>PostgreSql storage implementation for Hangfire (background job system for ASP.NET applications).</summary>
+		<copyright>Copyright &#169; 2016 Mihai Bogdan Eugen</copyright>
+		<releaseNotes>
+		  1.0.0
+		  * Not using connection pooling anymore
+		</releaseNotes>
+		<dependencies>
+			<dependency id="Dapper" version="1.42" />
+			<dependency id="Hangfire.Core" version="1.5.3" />
+			<dependency id="Newtonsoft.Json" version="8.0.2" />
+			<dependency id="Npgsql" version="3.0.5" />
+			<dependency id="Owin" version="1.0" />
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="bin\Release\Hangfire.PostgreSql.Reboot.*" target="lib" />
+	</files>
+</package>

@@ -99,9 +99,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Hangfire.PostgreSql\Hangfire.PostgreSql.csproj">
+    <ProjectReference Include="..\..\src\Hangfire.PostgreSql.Reboot\Hangfire.PostgreSql.Reboot.csproj">
       <Project>{7386e68c-544d-49d8-8ae4-b642217c5bed}</Project>
-      <Name>Hangfire.PostgreSql</Name>
+      <Name>Hangfire.PostgreSql.Reboot</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

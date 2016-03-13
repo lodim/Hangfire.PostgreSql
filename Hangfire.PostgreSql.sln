@@ -5,7 +5,7 @@ VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{766BE831-F758-46BC-AFD3-BBEEFE0F686F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hangfire.PostgreSql", "src\Hangfire.PostgreSql\Hangfire.PostgreSql.csproj", "{7386E68C-544D-49D8-8AE4-B642217C5BED}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hangfire.PostgreSql.Reboot", "src\Hangfire.PostgreSql.Reboot\Hangfire.PostgreSql.Reboot.csproj", "{7386E68C-544D-49D8-8AE4-B642217C5BED}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hangfire.PostgreSql.Tests", "tests\Hangfire.PostgreSql.Tests\Hangfire.PostgreSql.Tests.csproj", "{6DFFA275-C483-4501-823A-741AC9EC0847}"
 EndProject
@@ -15,11 +15,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{2222F7
 		.nuget\NuGet.exe = .nuget\NuGet.exe
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 		.nuget\packages.config = .nuget\packages.config
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nuspecs", "nuspecs", "{16354A76-2C70-444F-956E-D289DD6B0127}"
-	ProjectSection(SolutionItems) = preProject
-		nuspecs\Hangfire.PostgreSql.nuspec = nuspecs\Hangfire.PostgreSql.nuspec
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5CA38188-92EE-453C-A04E-A506DF15A787}"

@@ -18,29 +18,15 @@
 //   
 //    Special thanks goes to them.
 
-using System;
-using System.Data;
+using System.Collections.Generic;
 
-namespace Hangfire.PostgreSql
+namespace Hangfire.PostgreSql.Reboot
 {
-    internal class PostgreSqlJobQueueProvider : IPersistentJobQueueProvider
+    public interface IPersistentJobQueueMonitoringApi
     {
-        public PostgreSqlJobQueueProvider(PostgreSqlStorageOptions options)
-        {
-            if (options == null) throw new ArgumentNullException(nameof(options));
-            Options = options;
-        }
-
-        public PostgreSqlStorageOptions Options { get; }
-
-        public IPersistentJobQueue GetJobQueue(IDbConnection connection)
-        {
-            return new PostgreSqlJobQueue(connection, Options);
-        }
-
-        public IPersistentJobQueueMonitoringApi GetJobQueueMonitoringApi(IDbConnection connection)
-        {
-            return new PostgreSqlJobQueueMonitoringApi(connection, Options);
-        }
+        IEnumerable<string> GetQueues();
+        IEnumerable<int> GetEnqueuedJobIds(string queue, int from, int perPage);
+        IEnumerable<int> GetFetchedJobIds(string queue, int from, int perPage);
+        EnqueuedAndFetchedCountDto GetEnqueuedAndFetchedCount(string queue);
     }
 }

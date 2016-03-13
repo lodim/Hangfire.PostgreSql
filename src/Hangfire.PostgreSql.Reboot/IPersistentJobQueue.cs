@@ -1,5 +1,5 @@
-﻿// This file is part of Hangfire.PostgreSql.Reboot
-// Copyright © 2016 Mihai Bogdan Eugen.
+// This file is part of Hangfire.PostgreSql.Reboot
+// Copyright � 2016 Mihai Bogdan Eugen.
 // 
 // Hangfire.PostgreSql is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as 
@@ -18,14 +18,14 @@
 //   
 //    Special thanks goes to them.
 
-using System;
+using System.Threading;
+using Hangfire.Storage;
 
-namespace Hangfire.PostgreSql.Entities
+namespace Hangfire.PostgreSql.Reboot
 {
-    internal class ServerData
+    public interface IPersistentJobQueue
     {
-        public int WorkerCount { get; set; }
-        public string[] Queues { get; set; }
-        public DateTime? StartedAt { get; set; }
+        IFetchedJob Dequeue(string[] queues, CancellationToken cancellationToken);
+        void Enqueue(string queue, string jobId);
     }
 }

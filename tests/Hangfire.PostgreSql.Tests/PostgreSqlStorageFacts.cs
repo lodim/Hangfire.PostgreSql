@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Hangfire.PostgreSql.Reboot;
 using Xunit;
 
 namespace Hangfire.PostgreSql.Tests

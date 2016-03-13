@@ -1,5 +1,5 @@
-// This file is part of Hangfire.PostgreSql.Reboot
-// Copyright � 2016 Mihai Bogdan Eugen.
+﻿// This file is part of Hangfire.PostgreSql.Reboot
+// Copyright © 2016 Mihai Bogdan Eugen.
 // 
 // Hangfire.PostgreSql is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as 
@@ -18,11 +18,14 @@
 //   
 //    Special thanks goes to them.
 
-namespace Hangfire.PostgreSql
+using System;
+
+namespace Hangfire.PostgreSql.Reboot.Entities
 {
-    public class EnqueuedAndFetchedCountDto
+    internal class Server
     {
-        public long? EnqueuedCount { get; set; }
-        public long? FetchedCount { get; set; }
+        public string Id { get; set; }
+        public string Data { get; set; }
+        public DateTime LastHeartbeat { get; set; }
     }
 }

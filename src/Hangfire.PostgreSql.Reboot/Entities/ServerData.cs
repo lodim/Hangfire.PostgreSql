@@ -18,12 +18,14 @@
 //   
 //    Special thanks goes to them.
 
-namespace Hangfire.PostgreSql.Entities
+using System;
+
+namespace Hangfire.PostgreSql.Reboot.Entities
 {
-    internal class JobParameter
+    internal class ServerData
     {
-        public int JobId { get; set; }
-        public string Name { get; set; }
-        public string Value { get; set; }
+        public int WorkerCount { get; set; }
+        public string[] Queues { get; set; }
+        public DateTime? StartedAt { get; set; }
     }
 }

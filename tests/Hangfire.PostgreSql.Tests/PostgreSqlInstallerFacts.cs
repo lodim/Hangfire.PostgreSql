@@ -1,5 +1,6 @@
 ﻿using System;
 using Dapper;
+using Hangfire.PostgreSql.Reboot;
 using Npgsql;
 using Xunit;
 

@@ -20,7 +20,7 @@
 
 using System;
 
-namespace Hangfire.PostgreSql
+namespace Hangfire.PostgreSql.Reboot
 {
     public class PostgreSqlStorageOptions
     {

@@ -24,7 +24,7 @@ using System.Diagnostics;
 using System.Threading;
 using Dapper;
 
-namespace Hangfire.PostgreSql
+namespace Hangfire.PostgreSql.Reboot
 {
     internal class PostgreSqlDistributedLock : IDisposable
     {

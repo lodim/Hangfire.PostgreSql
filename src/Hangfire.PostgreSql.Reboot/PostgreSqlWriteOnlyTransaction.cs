@@ -28,7 +28,7 @@ using Hangfire.States;
 using Hangfire.Storage;
 using Npgsql;
 
-namespace Hangfire.PostgreSql
+namespace Hangfire.PostgreSql.Reboot
 {
     internal class PostgreSqlWriteOnlyTransaction : IWriteOnlyTransaction
     {
@@ -48,9 +48,9 @@ namespace Hangfire.PostgreSql
             if (queueProviders == null) throw new ArgumentNullException(nameof(queueProviders));
             if (options == null) throw new ArgumentNullException(nameof(options));
 
-            _connection = connection;
-            _options = options;
-            _queueProviders = queueProviders;
+            this._connection = connection;
+            this._options = options;
+            this._queueProviders = queueProviders;
         }
 
         public void Dispose()
@@ -59,12 +59,12 @@ namespace Hangfire.PostgreSql
 
         public void Commit()
         {
-            using (var transaction = _connection.BeginTransaction(IsolationLevel.RepeatableRead))
+            using (var transaction = this._connection.BeginTransaction(IsolationLevel.RepeatableRead))
             {
 
-                foreach (var command in _commandQueue)
+                foreach (var command in this._commandQueue)
                 {
-                    command(_connection, transaction);
+                    command(this._connection, transaction);
                 }
                 transaction.Commit();
             }
@@ -75,23 +75,23 @@ namespace Hangfire.PostgreSql
             string sql =
                 string.Format(
                     @"
-UPDATE """ + _options.SchemaName + @""".""job""
+UPDATE """ + this._options.SchemaName + @""".""job""
 SET ""expireat"" = NOW() AT TIME ZONE 'UTC' + INTERVAL '{0} SECONDS'
 WHERE ""id"" = @id;
 ",
                     (long)expireIn.TotalSeconds);
 
 
-            QueueCommand((con, trx) => con.Execute(
+            this.QueueCommand((con, trx) => con.Execute(
                 sql,
                 new { id = Convert.ToInt32(jobId, CultureInfo.InvariantCulture) }, trx));
         }
 
         public void PersistJob(string jobId)
         {
-            QueueCommand((con, trx) => con.Execute(
+            this.QueueCommand((con, trx) => con.Execute(
                 @"
-UPDATE """ + _options.SchemaName + @""".""job"" 
+UPDATE """ + this._options.SchemaName + @""".""job"" 
 SET ""expireat"" = NULL 
 WHERE ""id"" = @id;
 ",
@@ -103,16 +103,16 @@ WHERE ""id"" = @id;
 
             string addAndSetStateSql = @"
 WITH s AS (
-    INSERT INTO """ + _options.SchemaName + @""".""state"" (""jobid"", ""name"", ""reason"", ""createdat"", ""data"")
+    INSERT INTO """ + this._options.SchemaName + @""".""state"" (""jobid"", ""name"", ""reason"", ""createdat"", ""data"")
     VALUES (@jobId, @name, @reason, @createdAt, @data) RETURNING ""id""
 )
-UPDATE """ + _options.SchemaName + @""".""job"" j
+UPDATE """ + this._options.SchemaName + @""".""job"" j
 SET ""stateid"" = s.""id"", ""statename"" = @name
 FROM s
 WHERE j.""id"" = @id;
 ";
 
-            QueueCommand((con, trx) => con.Execute(
+            this.QueueCommand((con, trx) => con.Execute(
                 addAndSetStateSql,
                 new
                 {
@@ -128,11 +128,11 @@ WHERE j.""id"" = @id;
         public void AddJobState(string jobId, IState state)
         {
             string addStateSql = @"
-INSERT INTO """ + _options.SchemaName + @""".""state"" (""jobid"", ""name"", ""reason"", ""createdat"", ""data"")
+INSERT INTO """ + this._options.SchemaName + @""".""state"" (""jobid"", ""name"", ""reason"", ""createdat"", ""data"")
 VALUES (@jobId, @name, @reason, @createdAt, @data);
 ";
 
-            QueueCommand((con, trx) => con.Execute(
+            this.QueueCommand((con, trx) => con.Execute(
                 addStateSql,
                 new
                 {
@@ -146,18 +146,18 @@ VALUES (@jobId, @name, @reason, @createdAt, @data);
 
         public void AddToQueue(string queue, string jobId)
         {
-            var provider = _queueProviders.GetProvider(queue);
-            var persistentQueue = provider.GetJobQueue(_connection);
+            var provider = this._queueProviders.GetProvider(queue);
+            var persistentQueue = provider.GetJobQueue(this._connection);
 
-            QueueCommand((con, trx) => persistentQueue.Enqueue(queue, jobId));
+            this.QueueCommand((con, trx) => persistentQueue.Enqueue(queue, jobId));
         }
 
  
        public void IncrementCounter(string key)
         {
-            QueueCommand((con, trx) => con.Execute(
+            this.QueueCommand((con, trx) => con.Execute(
                 @"
-INSERT INTO """ + _options.SchemaName + @""".""counter"" (""key"", ""value"") 
+INSERT INTO """ + this._options.SchemaName + @""".""counter"" (""key"", ""value"") 
 VALUES (@key, @value);
 ",
                 new { key, value = +1 }, trx));
@@ -168,22 +168,22 @@ VALUES (@key, @value);
             string sql =
                 string.Format(
                     @"
-INSERT INTO """ + _options.SchemaName + @""".""counter""(""key"", ""value"", ""expireat"") 
+INSERT INTO """ + this._options.SchemaName + @""".""counter""(""key"", ""value"", ""expireat"") 
 VALUES (@key, @value, NOW() AT TIME ZONE 'UTC' + INTERVAL '{0} SECONDS');
 ",
                     (long)expireIn.TotalSeconds);
 
 
-            QueueCommand((con, trx) => con.Execute(
+            this.QueueCommand((con, trx) => con.Execute(
                 sql,
                 new { key, value = +1 }, trx));
         }
 
         public void DecrementCounter(string key)
         {
-            QueueCommand((con, trx) => con.Execute(
+            this.QueueCommand((con, trx) => con.Execute(
                 @"
-INSERT INTO """ + _options.SchemaName + @""".""counter""(""key"", ""value"") 
+INSERT INTO """ + this._options.SchemaName + @""".""counter""(""key"", ""value"") 
 VALUES (@key, @value)
 ",
                 new { key, value = -1 }, trx));
@@ -194,19 +194,19 @@ VALUES (@key, @value)
             string sql =
                 string.Format(
                     @"
-INSERT INTO """ + _options.SchemaName + @""".""counter""(""key"", ""value"", ""expireat"") 
+INSERT INTO """ + this._options.SchemaName + @""".""counter""(""key"", ""value"", ""expireat"") 
 VALUES (@key, @value, NOW() AT TIME ZONE 'UTC' + INTERVAL '{0} SECONDS');
 ",
                     (long) expireIn.TotalSeconds);
 
-            QueueCommand((con, trx) => con.Execute(sql
+            this.QueueCommand((con, trx) => con.Execute(sql
                 ,
                 new { key, value = -1 }, trx));
         }
 
         public void AddToSet(string key, string value)
         {
-            AddToSet(key, value, 0.0);
+            this.AddToSet(key, value, 0.0);
         }
 
         public void AddToSet(string key, string value, double score)
@@ -215,14 +215,14 @@ VALUES (@key, @value, NOW() AT TIME ZONE 'UTC' + INTERVAL '{0} SECONDS');
 WITH ""inputvalues"" AS (
 	SELECT @key ""key"", @value ""value"", @score ""score""
 ), ""updatedrows"" AS ( 
-	UPDATE """ + _options.SchemaName + @""".""set"" ""updatetarget""
+	UPDATE """ + this._options.SchemaName + @""".""set"" ""updatetarget""
 	SET ""score"" = ""inputvalues"".""score""
 	FROM ""inputvalues""
 	WHERE ""updatetarget"".""key"" = ""inputvalues"".""key""
 	AND ""updatetarget"".""value"" = ""inputvalues"".""value""
 	RETURNING ""updatetarget"".""key"", ""updatetarget"".""value""
 )
-INSERT INTO """ + _options.SchemaName + @""".""set""(""key"", ""value"", ""score"")
+INSERT INTO """ + this._options.SchemaName + @""".""set""(""key"", ""value"", ""score"")
 SELECT ""key"", ""value"", ""score"" FROM ""inputvalues"" ""insertvalues""
 WHERE NOT EXISTS (
 	SELECT 1 
@@ -232,16 +232,16 @@ WHERE NOT EXISTS (
 );
 ";
 
-            QueueCommand((con, trx) => con.Execute(
+            this.QueueCommand((con, trx) => con.Execute(
                 addSql,
                 new { key, value, score }, trx));
         }
 
         public void RemoveFromSet(string key, string value)
         {
-            QueueCommand((con, trx) => con.Execute(
+            this.QueueCommand((con, trx) => con.Execute(
                 @"
-DELETE FROM """ + _options.SchemaName + @""".""set"" 
+DELETE FROM """ + this._options.SchemaName + @""".""set"" 
 WHERE ""key"" = @key 
 AND ""value"" = @value;
 ",
@@ -250,9 +250,9 @@ AND ""value"" = @value;
 
         public void InsertToList(string key, string value)
         {
-            QueueCommand((con, trx) => con.Execute(
+            this.QueueCommand((con, trx) => con.Execute(
                 @"
-INSERT INTO """ + _options.SchemaName + @""".""list"" (""key"", ""value"") 
+INSERT INTO """ + this._options.SchemaName + @""".""list"" (""key"", ""value"") 
 VALUES (@key, @value);
 ",
                 new { key, value }, trx));
@@ -260,9 +260,9 @@ VALUES (@key, @value);
 
         public void RemoveFromList(string key, string value)
         {
-            QueueCommand((con, trx) => con.Execute(
+            this.QueueCommand((con, trx) => con.Execute(
                 @"
-DELETE FROM """ + _options.SchemaName + @""".""list"" 
+DELETE FROM """ + this._options.SchemaName + @""".""list"" 
 WHERE ""key"" = @key 
 AND ""value"" = @value;
 ",
@@ -273,18 +273,18 @@ AND ""value"" = @value;
         {
             string trimSql =
                 @"
-DELETE FROM """ + _options.SchemaName + @""".""list"" AS source
+DELETE FROM """ + this._options.SchemaName + @""".""list"" AS source
 WHERE ""key"" = @key
 AND ""id"" NOT IN (
     SELECT ""id"" 
-    FROM """ + _options.SchemaName + @""".""list"" AS keep
+    FROM """ + this._options.SchemaName + @""".""list"" AS keep
     WHERE keep.""key"" = source.""key""
     ORDER BY ""id"" 
     OFFSET @start LIMIT @end
 );
 ";
 
-            QueueCommand((con, trx) => con.Execute(
+            this.QueueCommand((con, trx) => con.Execute(
                 trimSql,
                 new {key, start = keepStartingFrom, end = (keepEndingAt - keepStartingFrom + 1) }, trx));
         }
@@ -298,14 +298,14 @@ AND ""id"" NOT IN (
 WITH ""inputvalues"" AS (
 	SELECT @key ""key"", @field ""field"", @value ""value""
 ), ""updatedrows"" AS ( 
-	UPDATE """ + _options.SchemaName + @""".""hash"" ""updatetarget""
+	UPDATE """ + this._options.SchemaName + @""".""hash"" ""updatetarget""
 	SET ""value"" = ""inputvalues"".""value""
 	FROM ""inputvalues""
 	WHERE ""updatetarget"".""key"" = ""inputvalues"".""key""
 	AND ""updatetarget"".""field"" = ""inputvalues"".""field""
 	RETURNING ""updatetarget"".""key"", ""updatetarget"".""field""
 )
-INSERT INTO """ + _options.SchemaName + @""".""hash""(""key"", ""field"", ""value"")
+INSERT INTO """ + this._options.SchemaName + @""".""hash""(""key"", ""field"", ""value"")
 SELECT ""key"", ""field"", ""value"" 
 FROM ""inputvalues"" ""insertvalues""
 WHERE NOT EXISTS (
@@ -320,7 +320,7 @@ WHERE NOT EXISTS (
             {
                 var pair = keyValuePair;
 
-                QueueCommand((con, trx) => con.Execute(sql, new {key, field = pair.Key, value = pair.Value }, trx));
+                this.QueueCommand((con, trx) => con.Execute(sql, new {key, field = pair.Key, value = pair.Value }, trx));
             }
         }
 
@@ -328,9 +328,9 @@ WHERE NOT EXISTS (
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
 
-            QueueCommand((con, trx) => con.Execute(
+            this.QueueCommand((con, trx) => con.Execute(
                 @"
-DELETE FROM """ + _options.SchemaName + @""".""hash"" 
+DELETE FROM """ + this._options.SchemaName + @""".""hash"" 
 WHERE ""key"" = @key;
 ",
                 new { key }, trx));
@@ -338,7 +338,7 @@ WHERE ""key"" = @key;
 
         private void QueueCommand(Action<NpgsqlConnection, NpgsqlTransaction> action)
         {
-            _commandQueue.Enqueue(action);
+            this._commandQueue.Enqueue(action);
         }
     }
 }

@@ -23,7 +23,7 @@ using System.Data;
 using Dapper;
 using Hangfire.Storage;
 
-namespace Hangfire.PostgreSql
+namespace Hangfire.PostgreSql.Reboot
 {
     internal class PostgreSqlFetchedJob : IFetchedJob
     {

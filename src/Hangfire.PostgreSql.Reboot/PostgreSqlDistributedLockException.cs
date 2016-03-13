@@ -1,5 +1,5 @@
-﻿// This file is part of Hangfire.PostgreSql.Reboot
-// Copyright © 2016 Mihai Bogdan Eugen.
+// This file is part of Hangfire.PostgreSql.Reboot
+// Copyright � 2016 Mihai Bogdan Eugen.
 // 
 // Hangfire.PostgreSql is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as 
@@ -19,17 +19,15 @@
 //    Special thanks goes to them.
 
 using System;
-using Hangfire.PostgreSql.Annotations;
 
-namespace Hangfire.PostgreSql
+namespace Hangfire.PostgreSql.Reboot
 {
-    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
-    internal class FetchedJob
+    [Serializable]
+    internal class PostgreSqlDistributedLockException : Exception
     {
-        public int Id { get; set; }
-        public int JobId { get; set; }
-        public string Queue { get; set; }
-        public DateTime? FetchedAt { get; set; }
-        public int UpdateCount { get; set; }
+        public PostgreSqlDistributedLockException(string message)
+            : base(message)
+        {
+        }
     }
 }

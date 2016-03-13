@@ -4,6 +4,7 @@ using System.Data;
 using System.Globalization;
 using System.Linq;
 using Dapper;
+using Hangfire.PostgreSql.Reboot;
 using Hangfire.States;
 using Moq;
 using Npgsql;

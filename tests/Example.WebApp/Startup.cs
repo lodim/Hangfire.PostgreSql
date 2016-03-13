@@ -1,7 +1,7 @@
 ﻿using System.Web;
 using Hangfire;
 using Hangfire.Dashboard;
-using Hangfire.PostgreSql;
+using Hangfire.PostgreSql.Reboot;
 using Microsoft.Owin;
 using Owin;
 
