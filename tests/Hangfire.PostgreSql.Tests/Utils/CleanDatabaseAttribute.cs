@@ -1,11 +1,9 @@
-﻿using System;
-using System.Data;
-using System.Linq;
+﻿using System.Linq;
 using System.Reflection;
 using System.Threading;
 using Dapper;
 using Npgsql;
-using Xunit;
+using Xunit.Sdk;
 
 namespace Hangfire.PostgreSql.Tests
 {
@@ -49,7 +47,7 @@ namespace Hangfire.PostgreSql.Tests
                 ConnectionUtils.GetMasterConnectionString()))
             {
 
-                bool databaseExists = connection.Query<bool?>(
+                var databaseExists = connection.Query<bool?>(
                     @"select true :: boolean from pg_database where datname = @databaseName;",
                     new
                     {

@@ -11,16 +11,13 @@ namespace Hangfire.PostgreSql.Tests
         [Fact]
         public void InstallingSchemaShouldNotThrowAnException()
         {
-            Assert.DoesNotThrow(() =>
+            UseConnection(connection =>
             {
-                UseConnection(connection =>
-                {
-                    string schemaName = "hangfire_tests_" + Guid.NewGuid().ToString().Replace("-", "_").ToLower();
+                var schemaName = "hangfire_tests_" + Guid.NewGuid().ToString().Replace("-", "_").ToLower();
 
-                    PostgreSqlObjectsInstaller.Install(connection, schemaName);
+                PostgreSqlObjectsInstaller.Install(connection, schemaName);
 
-                    connection.Execute($@"DROP SCHEMA ""{schemaName}"" CASCADE;");
-                });
+                connection.Execute($@"DROP SCHEMA ""{schemaName}"" CASCADE;");
             });
         }
 
