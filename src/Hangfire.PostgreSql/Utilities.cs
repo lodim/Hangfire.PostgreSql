@@ -1,9 +1,8 @@
 ﻿using System;
-using Npgsql;
 
 namespace Hangfire.PostgreSql
 {
-    public static partial class Utils
+    public static class Utilities
     {
         public static bool TryExecute(
             Action action,

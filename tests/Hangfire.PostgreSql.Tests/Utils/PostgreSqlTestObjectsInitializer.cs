@@ -33,7 +33,7 @@ namespace Hangfire.PostgreSql.Tests
     {
         public static void CleanTables(NpgsqlConnection connection)
         {
-            if (connection == null) throw new ArgumentNullException("connection");
+            if (connection == null) throw new ArgumentNullException(nameof(connection));
 
             var script = GetStringResource(
                 typeof (PostgreSqlTestObjectsInitializer).Assembly,
@@ -48,10 +48,8 @@ namespace Hangfire.PostgreSql.Tests
             {
                 if (stream == null) 
                 {
-                    throw new InvalidOperationException(String.Format(
-                        "Requested resource `{0}` was not found in the assembly `{1}`.",
-                        resourceName,
-                        assembly));
+                    throw new InvalidOperationException(
+                        $"Requested resource `{resourceName}` was not found in the assembly `{assembly}`.");
                 }
 
                 using (var reader = new StreamReader(stream))

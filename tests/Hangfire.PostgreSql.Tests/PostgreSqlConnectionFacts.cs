@@ -316,7 +316,7 @@ returning ""id"";";
                     createStateSql,
                     new { jobId = jobId, name = "Name", reason = "Reason", @data = JobHelper.ToJson(data) }).Single().id;
 
-                sql.Execute(updateJobStateSql, new { jobId = jobId, stateId = stateId });
+                sql.Execute(updateJobStateSql, new {jobId, stateId });
 
                 var result = connection.GetStateData(jobId.ToString(CultureInfo.InvariantCulture));
                 Assert.NotNull(result);
@@ -856,7 +856,7 @@ values (@key, @field, @value)";
             return ConnectionUtils.GetSchemaName();
         }
 
-        public static void SampleMethod(string arg) { }
+        private static void SampleMethod(string arg) { }
 
 
     }

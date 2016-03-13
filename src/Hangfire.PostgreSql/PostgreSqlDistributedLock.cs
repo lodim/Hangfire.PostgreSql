@@ -37,9 +37,9 @@ namespace Hangfire.PostgreSql
         public PostgreSqlDistributedLock(string resource, TimeSpan timeout, IDbConnection connection,
             PostgreSqlStorageOptions options)
         {
-            if (String.IsNullOrEmpty(resource)) throw new ArgumentNullException("resource");
-            if (connection == null) throw new ArgumentNullException("connection");
-            if (options == null) throw new ArgumentNullException("options");
+            if (string.IsNullOrEmpty(resource)) throw new ArgumentNullException(nameof(resource));
+            if (connection == null) throw new ArgumentNullException(nameof(connection));
+            if (options == null) throw new ArgumentNullException(nameof(options));
 
             _resource = resource;
             _connection = connection;
@@ -51,31 +51,30 @@ namespace Hangfire.PostgreSql
                 PostgreSqlDistributedLock_Init_UpdateCount(resource, timeout, connection, options);
         }
 
-        public void PostgreSqlDistributedLock_Init_Transaction(string resource, TimeSpan timeout, IDbConnection connection, PostgreSqlStorageOptions options)
+        private static void PostgreSqlDistributedLock_Init_Transaction(string resource, TimeSpan timeout, IDbConnection connection, PostgreSqlStorageOptions options)
         {
-
-            Stopwatch lockAcquiringTime = new Stopwatch();
+            var lockAcquiringTime = new Stopwatch();
             lockAcquiringTime.Start();
 
-            bool tryAcquireLock = true;
+            var tryAcquireLock = true;
 
             while (tryAcquireLock)
             {
                 try
                 {
-                    int rowsAffected = -1;
-                    using (var trx = _connection.BeginTransaction(IsolationLevel.RepeatableRead))
+                    int rowsAffected;
+                    using (var trx = connection.BeginTransaction(IsolationLevel.RepeatableRead))
                     {
-                        rowsAffected = _connection.Execute(@"
-INSERT INTO """ + _options.SchemaName + @""".""lock""(""resource"") 
+                        rowsAffected = connection.Execute(@"
+INSERT INTO """ + options.SchemaName + @""".""lock""(""resource"") 
 SELECT @resource
 WHERE NOT EXISTS (
-    SELECT 1 FROM """ + _options.SchemaName + @""".""lock"" 
+    SELECT 1 FROM """ + options.SchemaName + @""".""lock"" 
     WHERE ""resource"" = @resource
 );
 ", new
                         {
-                            resource = resource
+                            resource
                         }, trx);
                         trx.Commit();
                     }
@@ -83,6 +82,7 @@ WHERE NOT EXISTS (
                 }
                 catch (Exception)
                 {
+                    // ignored
                 }
 
                 if (lockAcquiringTime.ElapsedMilliseconds > timeout.TotalMilliseconds)
@@ -99,41 +99,38 @@ WHERE NOT EXISTS (
             }
 
             throw new PostgreSqlDistributedLockException(
-                String.Format(
-                "Could not place a lock on the resource '{0}': {1}.",
-                _resource,
-                "Lock timeout"));
+                $"Could not place a lock on the resource '{resource}': {"Lock timeout"}.");
         }
 
-        public void PostgreSqlDistributedLock_Init_UpdateCount(string resource, TimeSpan timeout, IDbConnection connection, PostgreSqlStorageOptions options)
+        private static void PostgreSqlDistributedLock_Init_UpdateCount(string resource, TimeSpan timeout, IDbConnection connection, PostgreSqlStorageOptions options)
         {
-
-            Stopwatch lockAcquiringTime = new Stopwatch();
+            var lockAcquiringTime = new Stopwatch();
             lockAcquiringTime.Start();
 
-            bool tryAcquireLock = true;
+            var tryAcquireLock = true;
 
             while (tryAcquireLock)
             {
                 try
                 {
-                    _connection.Execute(@"
-INSERT INTO """ + _options.SchemaName + @""".""lock""(""resource"", ""updatecount"") 
+                    connection.Execute(@"
+INSERT INTO """ + options.SchemaName + @""".""lock""(""resource"", ""updatecount"") 
 SELECT @resource, 0
 WHERE NOT EXISTS (
-    SELECT 1 FROM """ + _options.SchemaName + @""".""lock"" 
+    SELECT 1 FROM """ + options.SchemaName + @""".""lock"" 
     WHERE ""resource"" = @resource
 );
 ", new
  {
-     resource = resource
+     resource
  });
                 }
                 catch (Exception)
                 {
+                    // ignored
                 }
 
-                int rowsAffected = _connection.Execute(@"UPDATE """ + _options.SchemaName + @""".""lock"" SET ""updatecount"" = 1 WHERE ""updatecount"" = 0");
+                var rowsAffected = connection.Execute(@"UPDATE """ + options.SchemaName + @""".""lock"" SET ""updatecount"" = 1 WHERE ""updatecount"" = 0");
 
                 if (rowsAffected > 0) return;
 
@@ -151,14 +148,8 @@ WHERE NOT EXISTS (
             }
 
             throw new PostgreSqlDistributedLockException(
-                String.Format(
-                "Could not place a lock on the resource '{0}': {1}.",
-                _resource,
-                "Lock timeout"));
+                $"Could not place a lock on the resource '{resource}': {"Lock timeout"}.");
         }
-
-
-
 
         public void Dispose()
         {
@@ -166,7 +157,7 @@ WHERE NOT EXISTS (
 
             _completed = true;
 
-            int rowsAffected = _connection.Execute(@"
+            var rowsAffected = _connection.Execute(@"
 DELETE FROM """ + _options.SchemaName + @""".""lock"" 
 WHERE ""resource"" = @resource;
 ", new
@@ -178,9 +169,7 @@ WHERE ""resource"" = @resource;
             if (rowsAffected <= 0)
             {
                 throw new PostgreSqlDistributedLockException(
-                    String.Format(
-                        "Could not release a lock on the resource '{0}'. Lock does not exists.",
-                        _resource));
+                    $"Could not release a lock on the resource '{this._resource}'. Lock does not exists.");
             }
         }
     }

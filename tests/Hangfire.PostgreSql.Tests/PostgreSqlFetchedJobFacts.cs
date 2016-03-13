@@ -152,7 +152,7 @@ namespace Hangfire.PostgreSql.Tests
 insert into """ + GetSchemaName() + @""".""jobqueue"" (""jobid"", ""queue"", ""fetchedat"")
 values (@id, @queue, now() at time zone 'utc') returning ""id""";
 
-            return (int)connection.Query(arrangeSql, new { id = Convert.ToInt32(jobId, CultureInfo.InvariantCulture), queue = queue }).Single().id;
+            return (int)connection.Query(arrangeSql, new { id = Convert.ToInt32(jobId, CultureInfo.InvariantCulture), queue }).Single().id;
         }
 
         private static void UseConnection(Action<IDbConnection> action)

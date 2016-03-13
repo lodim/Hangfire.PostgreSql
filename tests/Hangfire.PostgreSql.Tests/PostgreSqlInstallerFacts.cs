@@ -1,14 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Globalization;
-using System.Linq;
-using System.Threading;
 using Dapper;
-using Hangfire.Common;
-using Hangfire.Server;
-using Hangfire.Storage;
-using Moq;
 using Npgsql;
 using Xunit;
 
@@ -24,11 +15,11 @@ namespace Hangfire.PostgreSql.Tests
             {
                 UseConnection(connection =>
                 {
-                    string schemaName = "hangfire_tests_" + System.Guid.NewGuid().ToString().Replace("-", "_").ToLower();
+                    string schemaName = "hangfire_tests_" + Guid.NewGuid().ToString().Replace("-", "_").ToLower();
 
                     PostgreSqlObjectsInstaller.Install(connection, schemaName);
 
-                    connection.Execute(string.Format(@"DROP SCHEMA ""{0}"" CASCADE;", schemaName));
+                    connection.Execute($@"DROP SCHEMA ""{schemaName}"" CASCADE;");
                 });
             });
         }

@@ -55,8 +55,8 @@ namespace Hangfire.PostgreSql
         /// config file.</exception>
         public PostgreSqlStorage(string nameOrConnectionString, PostgreSqlStorageOptions options)
         {
-            if (nameOrConnectionString == null) throw new ArgumentNullException("nameOrConnectionString");
-            if (options == null) throw new ArgumentNullException("options");
+            if (nameOrConnectionString == null) throw new ArgumentNullException(nameof(nameOrConnectionString));
+            if (options == null) throw new ArgumentNullException(nameof(options));
 
             _options = options;
 
@@ -71,8 +71,7 @@ namespace Hangfire.PostgreSql
             else
             {
                 throw new ArgumentException(
-                    string.Format("Could not find connection string with name '{0}' in application config file",
-                                  nameOrConnectionString));
+                    $"Could not find connection string with name '{nameOrConnectionString}' in application config file");
             }
 
             if (options.PrepareSchemaIfNecessary)
@@ -95,8 +94,8 @@ namespace Hangfire.PostgreSql
         /// <param name="options">PostgreSqlStorageOptions</param>
         public PostgreSqlStorage(NpgsqlConnection existingConnection, PostgreSqlStorageOptions options)
         {
-            if (existingConnection == null) throw new ArgumentNullException("existingConnection");
-            if (options == null) throw new ArgumentNullException("options");
+            if (existingConnection == null) throw new ArgumentNullException(nameof(existingConnection));
+            if (options == null) throw new ArgumentNullException(nameof(options));
             var connectionStringBuilder = new NpgsqlConnectionStringBuilder(existingConnection.ConnectionString);
             if (connectionStringBuilder.Enlist) throw new ArgumentException("Npgsql is not fully compatible with TransactionScope yet, only connections without Enlist = true are accepted.");
             
@@ -149,7 +148,7 @@ namespace Hangfire.PostgreSql
                 builder.Append(_options.SchemaName);
 
                 return builder.Length != 0
-                    ? String.Format("PostgreSQL Server: {0}", builder)
+                    ? $"PostgreSQL Server: {builder}"
                     : canNotParseMessage;
             }
             catch (Exception)
@@ -158,11 +157,13 @@ namespace Hangfire.PostgreSql
             }
         }
 
-        internal NpgsqlConnection CreateAndOpenConnection()
+        private NpgsqlConnection CreateAndOpenConnection()
         {
-            var connectionStringBuilder = new NpgsqlConnectionStringBuilder(_connectionString);
-            connectionStringBuilder.Enlist = false; //Npgsql is not fully compatible with TransactionScope yet.
-
+            var connectionStringBuilder = new NpgsqlConnectionStringBuilder(_connectionString)
+            {
+                Enlist = false,         //Npgsql is not fully compatible with TransactionScope yet.
+            };
+            
             var connection = new NpgsqlConnection(connectionStringBuilder.ToString());
             connection.Open();
 
@@ -175,12 +176,12 @@ namespace Hangfire.PostgreSql
             QueueProviders = new PersistentJobQueueProviderCollection(defaultQueueProvider);
         }
 
-        private bool IsConnectionString(string nameOrConnectionString)
+        private static bool IsConnectionString(string nameOrConnectionString)
         {
             return nameOrConnectionString.Contains(";");
         }
 
-        private bool IsConnectionStringInConfiguration(string connectionStringName)
+        private static bool IsConnectionStringInConfiguration(string connectionStringName)
         {
             var connectionStringSetting = ConfigurationManager.ConnectionStrings[connectionStringName];
 

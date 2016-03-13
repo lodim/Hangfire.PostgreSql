@@ -21,6 +21,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Globalization;
 using System.Linq;
 using Dapper;
@@ -44,7 +45,7 @@ namespace Hangfire.PostgreSql
             PostgreSqlStorageOptions options,
             PersistentJobQueueProviderCollection queueProviders)
         {
-            if(options==null) throw new ArgumentNullException("options");
+            if(options==null) throw new ArgumentNullException(nameof(options));
 
             _connectionString = connectionString;
             _queueProviders = queueProviders;
@@ -136,25 +137,15 @@ namespace Hangfire.PostgreSql
             return UseConnection<IList<ServerDto>>(connection =>
             {
                 var servers = connection.Query<Entities.Server>(
-                    @"SELECT * FROM """ + _options.SchemaName + @""".""server""", null)
+                    @"SELECT * FROM """ + _options.SchemaName + @""".""server""")
                     .ToList();
 
-                var result = new List<ServerDto>();
-
-                foreach (var server in servers)
-                {
-                    var data = JobHelper.FromJson<ServerData>(server.Data);
-                    result.Add(new ServerDto
+                return (from server in servers
+                    let data = JobHelper.FromJson<ServerData>(server.Data)
+                    select new ServerDto
                     {
-                        Name = server.Id,
-                        Heartbeat = server.LastHeartbeat,
-                        Queues = data.Queues,
-                        StartedAt = data.StartedAt.HasValue ? data.StartedAt.Value : DateTime.MinValue,
-                        WorkersCount = data.WorkerCount
-                    });
-                }
-
-                return result;
+                        Name = server.Id, Heartbeat = server.LastHeartbeat, Queues = data.Queues, StartedAt = data.StartedAt ?? DateTime.MinValue, WorkersCount = data.WorkerCount
+                    }).ToList();
             });
         }
 
@@ -219,20 +210,13 @@ namespace Hangfire.PostgreSql
                     .ToArray();
 
                 var result = new List<QueueWithTopEnqueuedJobsDto>(tuples.Length);
-
-                foreach (var tuple in tuples)
-                {
-                    var enqueuedJobIds = tuple.Monitoring.GetEnqueuedJobIds(tuple.Queue, 0, 5);
-                    var counters = tuple.Monitoring.GetEnqueuedAndFetchedCount(tuple.Queue);
-
-                    result.Add(new QueueWithTopEnqueuedJobsDto
+                result.AddRange(from tuple in tuples
+                    let enqueuedJobIds = tuple.Monitoring.GetEnqueuedJobIds(tuple.Queue, 0, 5)
+                    let counters = tuple.Monitoring.GetEnqueuedAndFetchedCount(tuple.Queue)
+                    select new QueueWithTopEnqueuedJobsDto
                     {
-                        Name = tuple.Queue,
-                        Length = counters.EnqueuedCount ?? 0,
-                        Fetched = counters.FetchedCount,
-                        FirstJobs = EnqueuedJobs(connection, enqueuedJobIds)
+                        Name = tuple.Queue, Length = counters.EnqueuedCount ?? 0, Fetched = counters.FetchedCount, FirstJobs = EnqueuedJobs(connection, enqueuedJobIds)
                     });
-                }
 
                 return result;
             });
@@ -398,7 +382,7 @@ WHERE ""key"" = 'recurring-jobs';
                 endDate = endDate.AddHours(-1);
             }
 
-            var keyMaps = dates.ToDictionary(x => String.Format("stats:{0}:{1}", type, x.ToString("yyyy-MM-dd-HH")), x => x);
+            var keyMaps = dates.ToDictionary(x => $"stats:{type}:{x.ToString("yyyy-MM-dd-HH")}", x => x);
 
             return GetTimelineStats(connection, keyMaps);
         }
@@ -415,7 +399,7 @@ WHERE ""key"" = 'recurring-jobs';
                 dates.Add(endDate);
                 endDate = endDate.AddDays(-1);
             }
-            var keyMaps = dates.ToDictionary(x => String.Format("stats:{0}:{1}", type, x.ToString("yyyy-MM-dd")), x => x);
+            var keyMaps = dates.ToDictionary(x => $"stats:{type}:{x.ToString("yyyy-MM-dd")}", x => x);
  
             return GetTimelineStats(connection, keyMaps);
         }
@@ -544,7 +528,7 @@ LIMIT @count OFFSET @start;
 
             var jobs = connection.Query<SqlJob>(
                         jobsSql,
-                        new { stateName = stateName, start = from,  count = count })
+                        new {stateName, start = from, count })
                         .ToList();
 
             return DeserializeJobs(jobs, selector);
@@ -555,24 +539,20 @@ LIMIT @count OFFSET @start;
             Func<SqlJob, Job, Dictionary<string, string>, TDto> selector)
         {
             var result = new List<KeyValuePair<string, TDto>>(jobs.Count);
-
-            foreach (var job in jobs)
-            {
-                var stateData = JobHelper.FromJson<Dictionary<string, string>>(job.StateData);
-                var dto = selector(job, DeserializeJob(job.InvocationData, job.Arguments), stateData);
-
-                result.Add(new KeyValuePair<string, TDto>(
-                    job.Id.ToString(), dto));
-            }
+            result.AddRange(
+                from job in jobs
+                let stateData = JobHelper.FromJson<Dictionary<string, string>>(job.StateData)
+                let dto = selector(job, DeserializeJob(job.InvocationData, job.Arguments), stateData)
+                select new KeyValuePair<string, TDto>(job.Id.ToString(), dto));
 
             return new JobList<TDto>(result);
         }
 
         private JobList<FetchedJobDto> FetchedJobs(
-            NpgsqlConnection connection,
+            IDbConnection connection,
             IEnumerable<int> jobIds)
         {
-            string fetchedJobsSql = @"
+            var fetchedJobsSql = @"
 SELECT j.""id"" ""Id"", j.""invocationdata"" ""InvocationData"", j.""arguments"" ""Arguments"", j.""createdat"" ""CreatedAt"", 
     j.""expireat"" ""ExpireAt"", jq.""fetchedat"" ""FetchedAt"", j.""statename"" ""StateName"", s.""reason"" ""StateReason"", s.""data"" ""StateData""
 FROM """ + _options.SchemaName + @""".""job"" j
@@ -588,18 +568,12 @@ AND ""jq"".""fetchedat"" IS NOT NULL;
                 .ToList();
 
             var result = new List<KeyValuePair<string, FetchedJobDto>>(jobs.Count);
-
-            foreach (var job in jobs)
+            result.AddRange(jobs.Select(job => new KeyValuePair<string, FetchedJobDto>(job.Id.ToString(), new FetchedJobDto
             {
-                result.Add(new KeyValuePair<string, FetchedJobDto>(
-                    job.Id.ToString(),
-                    new FetchedJobDto
-                    {
-                        Job = DeserializeJob(job.InvocationData, job.Arguments),
-                        State = job.StateName,
-                        FetchedAt = job.FetchedAt
-                    }));
-            }
+                Job = DeserializeJob(job.InvocationData, job.Arguments),
+                State = job.StateName,
+                FetchedAt = job.FetchedAt
+            })));
 
             return new JobList<FetchedJobDto>(result);
         }

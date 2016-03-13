@@ -41,10 +41,10 @@ namespace Hangfire.PostgreSql
             string jobId, 
             string queue)
         {
-            if (connection == null) throw new ArgumentNullException("connection");
-            if (jobId == null) throw new ArgumentNullException("jobId");
-            if (queue == null) throw new ArgumentNullException("queue");
-            if (options == null) throw new ArgumentNullException("options");
+            if (connection == null) throw new ArgumentNullException(nameof(connection));
+            if (jobId == null) throw new ArgumentNullException(nameof(jobId));
+            if (queue == null) throw new ArgumentNullException(nameof(queue));
+            if (options == null) throw new ArgumentNullException(nameof(options));
 
             _connection = connection;
             _options = options;
@@ -54,8 +54,8 @@ namespace Hangfire.PostgreSql
             Queue = queue;
         }
 
-        public int Id { get; private set; }
-        public string JobId { get; private set; }
+        public int Id { get; }
+        public string JobId { get; }
         public string Queue { get; private set; }
 
         public void RemoveFromQueue()

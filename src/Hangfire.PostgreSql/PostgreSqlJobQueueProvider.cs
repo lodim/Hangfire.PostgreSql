@@ -26,24 +26,22 @@ namespace Hangfire.PostgreSql
 {
     internal class PostgreSqlJobQueueProvider : IPersistentJobQueueProvider
     {
-        private readonly PostgreSqlStorageOptions _options;
-
         public PostgreSqlJobQueueProvider(PostgreSqlStorageOptions options)
         {
-            if (options == null) throw new ArgumentNullException("options");
-            _options = options;
+            if (options == null) throw new ArgumentNullException(nameof(options));
+            Options = options;
         }
 
-        public PostgreSqlStorageOptions Options { get { return _options; } }
+        public PostgreSqlStorageOptions Options { get; }
 
         public IPersistentJobQueue GetJobQueue(IDbConnection connection)
         {
-            return new PostgreSqlJobQueue(connection, _options);
+            return new PostgreSqlJobQueue(connection, Options);
         }
 
         public IPersistentJobQueueMonitoringApi GetJobQueueMonitoringApi(IDbConnection connection)
         {
-            return new PostgreSqlJobQueueMonitoringApi(connection, _options);
+            return new PostgreSqlJobQueueMonitoringApi(connection, Options);
         }
     }
 }

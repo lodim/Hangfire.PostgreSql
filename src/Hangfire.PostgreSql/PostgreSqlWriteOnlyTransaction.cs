@@ -45,12 +45,11 @@ namespace Hangfire.PostgreSql
             PostgreSqlStorageOptions options,
             PersistentJobQueueProviderCollection queueProviders)
         {
-            if (connection == null) throw new ArgumentNullException("connection");
-            if (queueProviders == null) throw new ArgumentNullException("queueProviders");
-            if (options == null) throw new ArgumentNullException("options");
+            if (connection == null) throw new ArgumentNullException(nameof(connection));
+            if (queueProviders == null) throw new ArgumentNullException(nameof(queueProviders));
+            if (options == null) throw new ArgumentNullException(nameof(options));
 
             _connection = connection;
-;
             _options = options;
             _queueProviders = queueProviders;
         }
@@ -66,14 +65,7 @@ namespace Hangfire.PostgreSql
 
                 foreach (var command in _commandQueue)
                 {
-                    try
-                    {
-                        command(_connection, transaction);
-                    }
-                    catch
-                    {
-                        throw;
-                    }
+                    command(_connection, transaction);
                 }
                 transaction.Commit();
             }
@@ -295,13 +287,13 @@ AND ""id"" NOT IN (
 
             QueueCommand((con, trx) => con.Execute(
                 trimSql,
-                new { key = key, start = keepStartingFrom, end = (keepEndingAt - keepStartingFrom + 1) }, trx));
+                new {key, start = keepStartingFrom, end = (keepEndingAt - keepStartingFrom + 1) }, trx));
         }
 
         public void SetRangeInHash(string key, IEnumerable<KeyValuePair<string, string>> keyValuePairs)
         {
-            if (key == null) throw new ArgumentNullException("key");
-            if (keyValuePairs == null) throw new ArgumentNullException("keyValuePairs");
+            if (key == null) throw new ArgumentNullException(nameof(key));
+            if (keyValuePairs == null) throw new ArgumentNullException(nameof(keyValuePairs));
 
             string sql = @"
 WITH ""inputvalues"" AS (
@@ -329,13 +321,13 @@ WHERE NOT EXISTS (
             {
                 var pair = keyValuePair;
 
-                QueueCommand((con, trx) => con.Execute(sql, new { key = key, field = pair.Key, value = pair.Value }, trx));
+                QueueCommand((con, trx) => con.Execute(sql, new {key, field = pair.Key, value = pair.Value }, trx));
             }
         }
 
         public void RemoveHash(string key)
         {
-            if (key == null) throw new ArgumentNullException("key");
+            if (key == null) throw new ArgumentNullException(nameof(key));
 
             QueueCommand((con, trx) => con.Execute(
                 @"
@@ -345,7 +337,7 @@ WHERE ""key"" = @key;
                 new { key }, trx));
         }
 
-        internal void QueueCommand(Action<NpgsqlConnection, NpgsqlTransaction> action)
+        private void QueueCommand(Action<NpgsqlConnection, NpgsqlTransaction> action)
         {
             _commandQueue.Enqueue(action);
         }

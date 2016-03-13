@@ -38,8 +38,8 @@ namespace Hangfire.PostgreSql
 
         public PostgreSqlJobQueue(IDbConnection connection, PostgreSqlStorageOptions options)
         {
-            if (options == null) throw new ArgumentNullException("options");
-            if (connection == null) throw new ArgumentNullException("connection");
+            if (options == null) throw new ArgumentNullException(nameof(options));
+            if (connection == null) throw new ArgumentNullException(nameof(connection));
 
             _options = options;
             _connection = connection;
@@ -57,10 +57,10 @@ namespace Hangfire.PostgreSql
 
 
         [NotNull]
-        public IFetchedJob Dequeue_Transaction(string[] queues, CancellationToken cancellationToken)
+        private IFetchedJob Dequeue_Transaction(string[] queues, CancellationToken cancellationToken)
         {
-            if (queues == null) throw new ArgumentNullException("queues");
-            if (queues.Length == 0) throw new ArgumentException("Queue array must be non-empty.", "queues");
+            if (queues == null) throw new ArgumentNullException(nameof(queues));
+            if (queues.Length == 0) throw new ArgumentException("Queue array must be non-empty.", nameof(queues));
 
             long timeoutSeconds = (long)_options.InvisibilityTimeout.Negate().TotalSeconds;
             FetchedJob fetchedJob;
@@ -79,7 +79,7 @@ WHERE ""id"" IN (
 RETURNING ""id"" AS ""Id"", ""jobid"" AS ""JobId"", ""queue"" AS ""Queue"", ""fetchedat"" AS ""FetchedAt"";
 ";
 
-            var fetchConditions = new[] { "IS NULL", string.Format("< NOW() AT TIME ZONE 'UTC' + INTERVAL '{0} SECONDS'", timeoutSeconds) };
+            var fetchConditions = new[] { "IS NULL", $"< NOW() AT TIME ZONE 'UTC' + INTERVAL '{timeoutSeconds} SECONDS'"};
             var currentQueryIndex = 0;
 
             do
@@ -88,7 +88,7 @@ RETURNING ""id"" AS ""Id"", ""jobid"" AS ""JobId"", ""queue"" AS ""Queue"", ""fe
 
                 string fetchJobSql = string.Format(fetchJobSqlTemplate, fetchConditions[currentQueryIndex]);
 
-                Utils.TryExecute(() =>
+                Utilities.TryExecute(() =>
                 {
                     using (var trx = _connection.BeginTransaction(IsolationLevel.RepeatableRead))
                     {
@@ -103,7 +103,7 @@ RETURNING ""id"" AS ""Id"", ""jobid"" AS ""JobId"", ""queue"" AS ""Queue"", ""fe
                     }
                 },
                     out fetchedJob,
-                    ex => ex is NpgsqlException && (ex as NpgsqlException).Code == "40001");
+                    ex => ex is NpgsqlException && ((NpgsqlException) ex).Code == "40001");
 
                 if (fetchedJob == null)
                 {
@@ -127,10 +127,10 @@ RETURNING ""id"" AS ""Id"", ""jobid"" AS ""JobId"", ""queue"" AS ""Queue"", ""fe
 
 
         [NotNull]
-        public IFetchedJob Dequeue_UpdateCount(string[] queues, CancellationToken cancellationToken)
+        private IFetchedJob Dequeue_UpdateCount(string[] queues, CancellationToken cancellationToken)
         {
-            if (queues == null) throw new ArgumentNullException("queues");
-            if (queues.Length == 0) throw new ArgumentException("Queue array must be non-empty.", "queues");
+            if (queues == null) throw new ArgumentNullException(nameof(queues));
+            if (queues.Length == 0) throw new ArgumentException("Queue array must be non-empty.", nameof(queues));
 
 
             long timeoutSeconds = (long)_options.InvisibilityTimeout.Negate().TotalSeconds;
@@ -155,7 +155,7 @@ AND ""updatecount"" = @UpdateCount
 RETURNING ""id"" AS ""Id"", ""jobid"" AS ""JobId"", ""queue"" AS ""Queue"", ""fetchedat"" AS ""FetchedAt"";
 ";
 
-            var fetchConditions = new[] { "IS NULL", string.Format("< NOW() AT TIME ZONE 'UTC' + INTERVAL '{0} SECONDS'", timeoutSeconds) };
+            var fetchConditions = new[] { "IS NULL", $"< NOW() AT TIME ZONE 'UTC' + INTERVAL '{timeoutSeconds} SECONDS'" };
             var currentQueryIndex = 0;
 
             do
@@ -205,17 +205,7 @@ INSERT INTO """ + _options.SchemaName + @""".""jobqueue"" (""jobid"", ""queue"")
 VALUES (@jobId, @queue);
 ";
 
-            _connection.Execute(enqueueJobSql, new { jobId = Convert.ToInt32(jobId,CultureInfo.InvariantCulture), queue = queue });
-        }
-
-        [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
-        private class FetchedJob
-        {
-            public int Id { get; set; }
-            public int JobId { get; set; }
-            public string Queue { get; set; }
-            public DateTime? FetchedAt { get; set; }
-            public int UpdateCount { get; set; }
+            _connection.Execute(enqueueJobSql, new { jobId = Convert.ToInt32(jobId,CultureInfo.InvariantCulture), queue });
         }
     }
 }

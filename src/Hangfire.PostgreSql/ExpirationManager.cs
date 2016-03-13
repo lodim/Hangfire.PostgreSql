@@ -55,8 +55,8 @@ namespace Hangfire.PostgreSql
 
         public ExpirationManager(PostgreSqlStorage storage,  PostgreSqlStorageOptions options, TimeSpan checkInterval)
         {
-            if (storage == null) throw new ArgumentNullException("storage");
-            if (options == null) throw new ArgumentNullException("options");
+            if (storage == null) throw new ArgumentNullException(nameof(storage));
+            if (options == null) throw new ArgumentNullException(nameof(options));
 
             _options = options;
             _storage = storage;
@@ -70,7 +70,7 @@ namespace Hangfire.PostgreSql
             {
                 Logger.DebugFormat("Removing outdated records from table '{0}'...", table);
 
-                int removedCount = 0;
+                int removedCount;
 
                 do
                 {
@@ -92,14 +92,11 @@ WHERE ""id"" IN (
                         }
                     }
 
-                    if (removedCount > 0)
-                    {
-                        Logger.Info(String.Format("Removed {0} outdated record(s) from '{1}' table.", removedCount,
-                            table));
+                    if (removedCount <= 0) continue;
+                    Logger.Info($"Removed {removedCount} outdated record(s) from '{table}' table.");
 
-                        cancellationToken.WaitHandle.WaitOne(DelayBetweenPasses);
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
+                    cancellationToken.WaitHandle.WaitOne(DelayBetweenPasses);
+                    cancellationToken.ThrowIfCancellationRequested();
                 } while (removedCount != 0);
             }
 

@@ -59,7 +59,7 @@ namespace Hangfire.PostgreSql.Tests
 
                 if (!databaseExists)
                 {
-                    connection.Execute(String.Format(@"CREATE DATABASE ""{0}""", ConnectionUtils.GetDatabaseName()));
+                    connection.Execute($@"CREATE DATABASE ""{ConnectionUtils.GetDatabaseName()}""");
                 }
             }
 

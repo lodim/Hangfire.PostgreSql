@@ -14,10 +14,14 @@
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
     <TargetFrameworkProfile />
-    <SccProjectName>SAK</SccProjectName>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccProvider>SAK</SccProvider>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -80,6 +84,7 @@
     <Compile Include="Entities\SqlState.cs" />
     <Compile Include="Entities\Server.cs" />
     <Compile Include="Entities\ServerData.cs" />
+    <Compile Include="FetchedJob.cs" />
     <Compile Include="IPersistentJobQueue.cs" />
     <Compile Include="IPersistentJobQueueMonitoringApi.cs" />
     <Compile Include="IPersistentJobQueueProvider.cs" />
@@ -98,7 +103,7 @@
     <Compile Include="PostgreSqlConnection.cs" />
     <Compile Include="PostgreSqlWriteOnlyTransaction.cs" />
     <Compile Include="PostgreSqlBootstrapperConfigurationExtensions.cs" />
-    <Compile Include="Utils\TryExecute.cs" />
+    <Compile Include="Utilities.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

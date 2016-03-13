@@ -34,8 +34,8 @@ namespace Hangfire.PostgreSql
 
         public PostgreSqlJobQueueMonitoringApi(IDbConnection connection, PostgreSqlStorageOptions options)
         {
-            if (connection == null) throw new ArgumentNullException("connection");
-            if (options == null) throw new ArgumentNullException("options");
+            if (connection == null) throw new ArgumentNullException(nameof(connection));
+            if (options == null) throw new ArgumentNullException(nameof(options));
 
             _connection = connection;
             _options = options;
@@ -69,7 +69,7 @@ LIMIT @count OFFSET @start;
 
             return _connection.Query<int>(
                 sqlQuery,
-                new {queue = queue, start = @from, count = perPage})
+                new {queue, start = @from, count = perPage})
                 .ToList();
         }
 
@@ -80,7 +80,7 @@ LIMIT @count OFFSET @start;
 
         public EnqueuedAndFetchedCountDto GetEnqueuedAndFetchedCount(string queue)
         {
-            string sqlQuery = @"
+            var sqlQuery = @"
 SELECT (
         SELECT COUNT(*) 
         FROM """ + _options.SchemaName + @""".""jobqueue"" 
@@ -95,7 +95,7 @@ SELECT (
     ) ""FetchedCount"";
 ";
 
-            var result = _connection.Query(sqlQuery, new { queue = queue }).Single();
+            var result = _connection.Query(sqlQuery, new {queue }).Single();
 
             return new EnqueuedAndFetchedCountDto
             {

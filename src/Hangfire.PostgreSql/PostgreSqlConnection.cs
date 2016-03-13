@@ -36,62 +36,53 @@ namespace Hangfire.PostgreSql
 {
     internal class PostgreSqlConnection : IStorageConnection
     {
-        private readonly NpgsqlConnection _connection;
         private readonly PersistentJobQueueProviderCollection _queueProviders;
         private readonly PostgreSqlStorageOptions _options;
-
-        public PostgreSqlConnection(
-            NpgsqlConnection connection,
-            PersistentJobQueueProviderCollection queueProviders,
-            PostgreSqlStorageOptions options)
-            : this(connection, queueProviders, options, true)
-        {
-        }
 
         public PostgreSqlConnection(
             NpgsqlConnection connection, 
             PersistentJobQueueProviderCollection queueProviders,
             PostgreSqlStorageOptions options,
-            bool ownsConnection)
+            bool ownsConnection = true)
         {
-            if (connection == null) throw new ArgumentNullException("connection");
-            if (queueProviders == null) throw new ArgumentNullException("queueProviders");
-            if (options == null) throw new ArgumentNullException("options");
+            if (connection == null) throw new ArgumentNullException(nameof(connection));
+            if (queueProviders == null) throw new ArgumentNullException(nameof(queueProviders));
+            if (options == null) throw new ArgumentNullException(nameof(options));
 
-            _connection = connection;
+            Connection = connection;
             _queueProviders = queueProviders;
             _options = options;
             OwnsConnection = ownsConnection;
         }
 
-        public bool OwnsConnection { get; private set; }
-        public NpgsqlConnection Connection { get { return _connection; } }
+        public bool OwnsConnection { get; }
+        public NpgsqlConnection Connection { get; }
 
         public void Dispose()
         {
             if (OwnsConnection)
             { 
-                 _connection.Dispose();
+                 Connection.Dispose();
             }
         }
 
         public IWriteOnlyTransaction CreateWriteTransaction()
         {
-            return new PostgreSqlWriteOnlyTransaction(_connection, _options, _queueProviders);
+            return new PostgreSqlWriteOnlyTransaction(Connection, _options, _queueProviders);
         }
 
         public IDisposable AcquireDistributedLock(string resource, TimeSpan timeout)
         {
             return new PostgreSqlDistributedLock(
-                String.Format("HangFire:{0}", resource),
+                $"HangFire:{resource}",
                 timeout,
-                _connection,
+                Connection,
                 _options);
         }
 
         public IFetchedJob FetchNextJob(string[] queues, CancellationToken cancellationToken)
         {
-            if (queues == null || queues.Length == 0) throw new ArgumentNullException("queues");
+            if (queues == null || queues.Length == 0) throw new ArgumentNullException(nameof(queues));
 
             var providers = queues
                 .Select(queue => _queueProviders.GetProvider(queue))
@@ -100,12 +91,10 @@ namespace Hangfire.PostgreSql
 
             if (providers.Length != 1)
             {
-                throw new InvalidOperationException(String.Format(
-                    "Multiple provider instances registered for queues: {0}. You should choose only one type of persistent queues per server instance.",
-                    String.Join(", ", queues)));
+                throw new InvalidOperationException($"Multiple provider instances registered for queues: {string.Join(", ", queues)}. You should choose only one type of persistent queues per server instance.");
             }
 
-            var persistentQueue = providers[0].GetJobQueue(_connection); 
+            var persistentQueue = providers[0].GetJobQueue(Connection); 
             return persistentQueue.Dequeue(queues, cancellationToken);
         }
 
@@ -115,10 +104,10 @@ namespace Hangfire.PostgreSql
             DateTime createdAt,
             TimeSpan expireIn)
         {
-            if (job == null) throw new ArgumentNullException("job");
-            if (parameters == null) throw new ArgumentNullException("parameters");
+            if (job == null) throw new ArgumentNullException(nameof(job));
+            if (parameters == null) throw new ArgumentNullException(nameof(parameters));
 
-            string createJobSql = @"
+            var createJobSql = @"
 INSERT INTO """ + _options.SchemaName + @""".""job"" (""invocationdata"", ""arguments"", ""createdat"", ""expireat"")
 VALUES (@invocationData, @arguments, @createdAt, @expireAt) 
 RETURNING ""id"";
@@ -126,53 +115,50 @@ RETURNING ""id"";
 
             var invocationData = InvocationData.Serialize(job);
 
-            var jobId = _connection.Query<int>(
+            var jobId = Connection.Query<int>(
                 createJobSql,
                 new
                 {
                     invocationData = JobHelper.ToJson(invocationData),
-                    arguments = invocationData.Arguments,
-                    createdAt = createdAt,
+                    arguments = invocationData.Arguments, createdAt,
                     expireAt = createdAt.Add(expireIn)
                 }).Single().ToString(CultureInfo.InvariantCulture);
 
-            if (parameters.Count > 0)
+            if (parameters.Count <= 0) return jobId;
+            var parameterArray = new object[parameters.Count];
+            var parameterIndex = 0;
+            foreach (var parameter in parameters)
             {
-                var parameterArray = new object[parameters.Count];
-                int parameterIndex = 0;
-                foreach (var parameter in parameters)
+                parameterArray[parameterIndex++] = new
                 {
-                    parameterArray[parameterIndex++] = new
-                    {
-                        jobId = Convert.ToInt32(jobId, CultureInfo.InvariantCulture),
-                        name = parameter.Key,
-                        value = parameter.Value
-                    };
-                }
+                    jobId = Convert.ToInt32(jobId, CultureInfo.InvariantCulture),
+                    name = parameter.Key,
+                    value = parameter.Value
+                };
+            }
 
-                string insertParameterSql = @"
+            var insertParameterSql = @"
 INSERT INTO """ + _options.SchemaName + @""".""jobparameter"" (""jobid"", ""name"", ""value"")
 VALUES (@jobId, @name, @value);
 ";
 
-                _connection.Execute(insertParameterSql, parameterArray);
-            }
+            Connection.Execute(insertParameterSql, parameterArray);
 
             return jobId;
         }
 
         public JobData GetJobData(string id)
         {
-            if (id == null) throw new ArgumentNullException("id");
+            if (id == null) throw new ArgumentNullException(nameof(id));
 
-            string sql = 
+            var sql = 
                 @"
 SELECT ""invocationdata"" ""invocationData"", ""statename"" ""stateName"", ""arguments"", ""createdat"" ""createdAt"" 
 FROM """ + _options.SchemaName + @""".""job"" 
 WHERE ""id"" = @id;
 ";
 
-            var jobData = _connection.Query<SqlJob>(sql, new { id = Convert.ToInt32(id, CultureInfo.InvariantCulture) })
+            var jobData = Connection.Query<SqlJob>(sql, new { id = Convert.ToInt32(id, CultureInfo.InvariantCulture) })
                 .SingleOrDefault();
 
             if (jobData == null) return null;
@@ -204,16 +190,16 @@ WHERE ""id"" = @id;
 
         public StateData GetStateData(string jobId)
         {
-            if (jobId == null) throw new ArgumentNullException("jobId");
+            if (jobId == null) throw new ArgumentNullException(nameof(jobId));
 
-            string sql = @"
+            var sql = @"
 SELECT s.""name"" ""Name"", s.""reason"" ""Reason"", s.""data"" ""Data""
 FROM """ + _options.SchemaName + @""".""state"" s
 INNER JOIN """ + _options.SchemaName + @""".""job"" j on j.""stateid"" = s.""id""
 WHERE j.""id"" = @jobId;
 ";
 
-            var sqlState = _connection.Query<SqlState>(sql, new { jobId = Convert.ToInt32(jobId, CultureInfo.InvariantCulture) }).SingleOrDefault();
+            var sqlState = Connection.Query<SqlState>(sql, new { jobId = Convert.ToInt32(jobId, CultureInfo.InvariantCulture) }).SingleOrDefault();
             if (sqlState == null)
             {
                 return null;
@@ -229,10 +215,10 @@ WHERE j.""id"" = @jobId;
 
         public void SetJobParameter(string id, string name, string value)
         {
-            if (id == null) throw new ArgumentNullException("id");
-            if (name == null) throw new ArgumentNullException("name");
+            if (id == null) throw new ArgumentNullException(nameof(id));
+            if (name == null) throw new ArgumentNullException(nameof(name));
 
-            string sql = @"
+            var sql = @"
 WITH ""inputvalues"" AS (
     SELECT @jobid ""jobid"", @name ""name"", @value ""value""
 ), ""updatedrows"" AS ( 
@@ -253,31 +239,31 @@ WHERE NOT EXISTS (
     AND ""updatedrows"".""name"" = ""insertvalues"".""name""
 );";
 
-                        _connection.Execute(sql,
+                        Connection.Execute(sql,
                             new { jobId = Convert.ToInt32(id, CultureInfo.InvariantCulture), name, value });
                     }
 
                     public string GetJobParameter(string id, string name)
                     {
-                        if (id == null) throw new ArgumentNullException("id");
-                        if (name == null) throw new ArgumentNullException("name");
+                        if (id == null) throw new ArgumentNullException(nameof(id));
+                        if (name == null) throw new ArgumentNullException(nameof(name));
 
-                        return _connection.Query<string>(
+                        return Connection.Query<string>(
                             @"
 SELECT ""value"" 
 FROM """ + _options.SchemaName + @""".""jobparameter"" 
 WHERE ""jobid"" = @id 
 AND ""name"" = @name;
 ",
-                            new { id = Convert.ToInt32(id, CultureInfo.InvariantCulture), name = name })
+                            new { id = Convert.ToInt32(id, CultureInfo.InvariantCulture), name })
                             .SingleOrDefault();
                     }
 
                     public HashSet<string> GetAllItemsFromSet(string key)
                     {
-                        if (key == null) throw new ArgumentNullException("key");
+                        if (key == null) throw new ArgumentNullException(nameof(key));
 
-                        var result = _connection.Query<string>(
+                        var result = Connection.Query<string>(
                             @"
 SELECT ""value"" 
 FROM """ + _options.SchemaName + @""".""set"" 
@@ -290,10 +276,10 @@ WHERE ""key"" = @key;
 
                     public string GetFirstByLowestScoreFromSet(string key, double fromScore, double toScore)
                     {
-                        if (key == null) throw new ArgumentNullException("key");
+                        if (key == null) throw new ArgumentNullException(nameof(key));
                         if (toScore < fromScore) throw new ArgumentException("The `toScore` value must be higher or equal to the `fromScore` value.");
 
-                        return _connection.Query<string>(
+                        return Connection.Query<string>(
                             @"
 SELECT ""value"" 
 FROM """ + _options.SchemaName + @""".""set"" 
@@ -307,10 +293,10 @@ ORDER BY ""score"" LIMIT 1;
 
                     public void SetRangeInHash(string key, IEnumerable<KeyValuePair<string, string>> keyValuePairs)
                     {
-                        if (key == null) throw new ArgumentNullException("key");
-                        if (keyValuePairs == null) throw new ArgumentNullException("keyValuePairs");
+                        if (key == null) throw new ArgumentNullException(nameof(key));
+                        if (keyValuePairs == null) throw new ArgumentNullException(nameof(keyValuePairs));
 
-                        string sql = @"
+            var sql = @"
 WITH ""inputvalues"" AS (
     SELECT @key ""key"", @field ""field"", @value ""value""
 ), ""updatedrows"" AS ( 
@@ -331,11 +317,11 @@ WHERE NOT EXISTS (
 );
 ";
 
-            using (var transaction = _connection.BeginTransaction(IsolationLevel.Serializable))
+            using (var transaction = Connection.BeginTransaction(IsolationLevel.Serializable))
             {
                 foreach (var keyValuePair in keyValuePairs)
                 {
-                    _connection.Execute(sql, new { key = key, field = keyValuePair.Key, value = keyValuePair.Value }, transaction);
+                    Connection.Execute(sql, new {key, field = keyValuePair.Key, value = keyValuePair.Value }, transaction);
                 }
                 transaction.Commit();
             }
@@ -343,9 +329,9 @@ WHERE NOT EXISTS (
 
         public Dictionary<string, string> GetAllEntriesFromHash(string key)
         {
-            if (key == null) throw new ArgumentNullException("key");
+            if (key == null) throw new ArgumentNullException(nameof(key));
 
-            var result = _connection.Query<SqlHash>(
+            var result = Connection.Query<SqlHash>(
                 @"
 SELECT ""field"" ""Field"", ""value"" ""Value"" 
 FROM """ + _options.SchemaName + @""".""hash"" 
@@ -359,8 +345,8 @@ WHERE ""key"" = @key;
 
         public void AnnounceServer(string serverId, ServerContext context)
         {
-            if (serverId == null) throw new ArgumentNullException("serverId");
-            if (context == null) throw new ArgumentNullException("context");
+            if (serverId == null) throw new ArgumentNullException(nameof(serverId));
+            if (context == null) throw new ArgumentNullException(nameof(context));
 
             var data = new ServerData
             {
@@ -369,7 +355,7 @@ WHERE ""key"" = @key;
                 StartedAt = DateTime.UtcNow,
             };
 
-            string sql = @"
+            var sql = @"
 WITH ""inputvalues"" AS (
     SELECT @id ""id"", @data ""data"", NOW() AT TIME ZONE 'UTC' ""lastheartbeat""
 ), ""updatedrows"" AS ( 
@@ -388,15 +374,15 @@ WHERE NOT EXISTS (
 );
 ";
 
-            _connection.Execute(sql,
+            Connection.Execute(sql,
                 new { id = serverId, data = JobHelper.ToJson(data) });
         }
 
         public void RemoveServer(string serverId)
         {
-            if (serverId == null) throw new ArgumentNullException("serverId");
+            if (serverId == null) throw new ArgumentNullException(nameof(serverId));
 
-            _connection.Execute(
+            Connection.Execute(
                 @"
 DELETE FROM """ + _options.SchemaName + @""".""server"" 
 WHERE ""id"" = @id;
@@ -406,9 +392,9 @@ WHERE ""id"" = @id;
 
         public void Heartbeat(string serverId)
         {
-            if (serverId == null) throw new ArgumentNullException("serverId");
+            if (serverId == null) throw new ArgumentNullException(nameof(serverId));
 
-            _connection.Execute(
+            Connection.Execute(
                 @"
 UPDATE """ + _options.SchemaName + @""".""server"" 
 SET ""lastheartbeat"" = NOW() AT TIME ZONE 'UTC' 
@@ -421,10 +407,10 @@ WHERE ""id"" = @id;
         {
             if (timeOut.Duration() != timeOut)
             {
-                throw new ArgumentException("The `timeOut` value must be positive.", "timeOut");
+                throw new ArgumentException("The `timeOut` value must be positive.", nameof(timeOut));
             }
 
-            return _connection.Execute(
+            return Connection.Execute(
                 string.Format(@"
 DELETE FROM """ + _options.SchemaName + @""".""server"" 
 WHERE ""lastheartbeat"" < (NOW() AT TIME ZONE 'UTC' - INTERVAL '{0} MILLISECONDS');

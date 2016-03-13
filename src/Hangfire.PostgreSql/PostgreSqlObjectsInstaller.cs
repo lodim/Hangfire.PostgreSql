@@ -25,7 +25,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
-using Dapper;
 using Hangfire.Logging;
 using Npgsql;
 
@@ -38,14 +37,13 @@ namespace Hangfire.PostgreSql
 
         public static void Install(NpgsqlConnection connection, string schemaName = "hangfire")
         {
-            if (connection == null) throw new ArgumentNullException("connection");
+            if (connection == null) throw new ArgumentNullException(nameof(connection));
 
             Log.Info("Start installing Hangfire SQL objects...");
 
             // version 3 to keep in check with Hangfire SqlServer, but I couldn't keep up with that idea after all;
-            int version = 3;
-            int previousVersion = 1;
-            bool scriptFound = true;
+            var version = 3;
+            var scriptFound = true;
 
             do
             {
@@ -53,12 +51,11 @@ namespace Hangfire.PostgreSql
                 {
                     var script = GetStringResource(
                         typeof (PostgreSqlObjectsInstaller).Assembly,
-                        string.Format("Hangfire.PostgreSql.Install.v{0}.sql",
-                            version.ToString(CultureInfo.InvariantCulture)));
+                        $"Hangfire.PostgreSql.Install.v{version.ToString(CultureInfo.InvariantCulture)}.sql");
                     if (schemaName != "hangfire")
                     {
-                        script = script.Replace("'hangfire'", string.Format("'{0}'", schemaName))
-                            .Replace(@"""hangfire""", string.Format(@"""{0}""", schemaName));
+                        script = script.Replace("'hangfire'", $"'{schemaName}'")
+                            .Replace(@"""hangfire""", $@"""{schemaName}""");
                     }
 
                     using (var transaction = connection.BeginTransaction(IsolationLevel.Serializable))
@@ -97,7 +94,6 @@ namespace Hangfire.PostgreSql
                     scriptFound = false;
                 }
 
-                previousVersion = version;
                 version++;
             } while (scriptFound);
 
@@ -110,10 +106,8 @@ namespace Hangfire.PostgreSql
             {
                 if (stream == null) 
                 {
-                    throw new InvalidOperationException(String.Format(
-                        "Requested resource `{0}` was not found in the assembly `{1}`.",
-                        resourceName,
-                        assembly));
+                    throw new InvalidOperationException(
+                        $"Requested resource `{resourceName}` was not found in the assembly `{assembly}`.");
                 }
 
                 using (var reader = new StreamReader(stream))
