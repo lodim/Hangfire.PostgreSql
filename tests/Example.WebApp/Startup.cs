@@ -19,7 +19,7 @@ namespace Example.WebApp
         private static void ConfigureHangfire(IAppBuilder app)
         {
             GlobalConfiguration.Configuration.UseStorage(new PostgreSqlStorage(ConfigurationService.GetConnectionString("DefaultConnection")));
-            GlobalConfiguration.Configuration.UseNLogLogProvider();
+            //GlobalConfiguration.Configuration.UseNLogLogProvider();
             app.UseHangfireDashboard("/hangfire", new DashboardOptions
             {
                 //AuthorizationFilters = new[] { new AuthorizationFilter { Roles = "Administrator" }, },

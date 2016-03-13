@@ -1,5 +1,5 @@
-﻿// This file is part of Hangfire.PostgreSql.
-// Copyright © 2014 Frank Hommers <http://hmm.rs/Hangfire.PostgreSql>.
+﻿// This file is part of Hangfire.PostgreSql.Reboot
+// Copyright © 2016 Mihai Bogdan Eugen.
 // 
 // Hangfire.PostgreSql is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as 
@@ -14,10 +14,9 @@
 // You should have received a copy of the GNU Lesser General Public 
 // License along with Hangfire.PostgreSql. If not, see <http://www.gnu.org/licenses/>.
 //
-// This work is based on the work of Sergey Odinokov, author of 
-// Hangfire. <http://hangfire.io/>
+// This work is based on the works of Frank Hommers and Sergey Odinokov, the author of Hangfire. <http://hangfire.io/>
 //   
-//    Special thanks goes to him.
+//    Special thanks goes to them.
 
 using System;
 using System.Data;
