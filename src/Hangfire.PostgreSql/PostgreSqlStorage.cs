@@ -98,6 +98,7 @@ namespace Hangfire.PostgreSql
             if (options == null) throw new ArgumentNullException(nameof(options));
             var connectionStringBuilder = new NpgsqlConnectionStringBuilder(existingConnection.ConnectionString);
             if (connectionStringBuilder.Enlist) throw new ArgumentException("Npgsql is not fully compatible with TransactionScope yet, only connections without Enlist = true are accepted.");
+            if (connectionStringBuilder.Pooling) throw new ArgumentException("Npgsql is not fully compatible with connection pooling.");
             
             _existingConnection = existingConnection;
             _options = options;
@@ -162,6 +163,7 @@ namespace Hangfire.PostgreSql
             var connectionStringBuilder = new NpgsqlConnectionStringBuilder(_connectionString)
             {
                 Enlist = false,         //Npgsql is not fully compatible with TransactionScope yet.
+                Pooling = false,        //http://stackoverflow.com/questions/28202608/timeout-while-getting-a-connection-from-pool-hangfire-postgres
             };
             
             var connection = new NpgsqlConnection(connectionStringBuilder.ToString());
