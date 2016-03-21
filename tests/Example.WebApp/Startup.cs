@@ -1,4 +1,5 @@
-﻿using System.Web;
+﻿using System;
+using System.Web;
 using Hangfire;
 using Hangfire.Dashboard;
 using Hangfire.PostgreSql.Reboot;
@@ -18,7 +19,11 @@ namespace Example.WebApp
 
         private static void ConfigureHangfire(IAppBuilder app)
         {
-            GlobalConfiguration.Configuration.UseStorage(new PostgreSqlStorage(ConfigurationService.GetConnectionString("DefaultConnection")));
+            var connectionString = ConfigurationService.GetConnectionString("DefaultConnection");
+            GlobalConfiguration.Configuration.UseStorage(new PostgreSqlStorage(connectionString, new PostgreSqlStorageOptions
+            {
+                UseConnectionPooling = true,
+            }));
             //GlobalConfiguration.Configuration.UseNLogLogProvider();
             app.UseHangfireDashboard("/hangfire", new DashboardOptions
             {
@@ -27,6 +32,7 @@ namespace Example.WebApp
             });
             app.UseHangfireServer(new BackgroundJobServerOptions
             {
+                WorkerCount = Environment.ProcessorCount,
                 Queues = new[] { "critical", "default" }
             });
         }
