@@ -4,7 +4,7 @@ This is an plugin to the Hangfire to enable PostgreSQL as a storage system.
 Read about hangfire here: https://github.com/HangfireIO/Hangfire#hangfire-
 and here: http://hangfire.io/
 
-Apart from other similar plugins, this one does not use connection pooling.
+Be aware about how you configure connection pooling and the worker count for the background job server.
 
 Instructions
 ------------
@@ -20,10 +20,15 @@ Then, configure Hangfire by using the following code:
 ```csharp
 private static void ConfigureHangfire(IAppBuilder app)
 {
-	GlobalConfiguration.Configuration.UseStorage(new PostgreSqlStorage("ConnectionString"));
+	var connectionString = ConfigurationService.GetConnectionString("DefaultConnection");
+	GlobalConfiguration.Configuration.UseStorage(new PostgreSqlStorage(connectionString, new PostgreSqlStorageOptions
+	{
+		UseConnectionPooling = true,
+	}));
 	//GlobalConfiguration.Configuration.UseNLogLogProvider();
 	app.UseHangfireServer(new BackgroundJobServerOptions
 	{
+		WorkerCount = Environment.ProcessorCount,
 		Queues = new[] { "critical", "default" }
 	});
 }
