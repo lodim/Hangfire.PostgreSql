@@ -52,6 +52,17 @@ BEGIN
 END;
 $$;
 
+DO $$
+BEGIN
+    BEGIN
+        CREATE INDEX "ix_hangfire_counter_expireat" ON "counter" ("expireat");
+    EXCEPTION
+        WHEN duplicate_table THEN RAISE NOTICE 'INDEX ix_hangfire_counter_expireat already exists.';
+    END;
+END;
+$$;
+
+
 --
 -- Table structure for table `Hash`
 --
@@ -126,6 +137,16 @@ CREATE TABLE IF NOT EXISTS "jobqueue" (  "id" SERIAL NOT NULL ,
   "fetchedat" TIMESTAMP NULL ,
   PRIMARY KEY ("id")
 ); 
+
+DO $$
+BEGIN
+    BEGIN
+        CREATE INDEX "ix_hangfire_jobqueue_jobidandqueue" ON "jobqueue" ("jobid","queue");
+    EXCEPTION
+        WHEN duplicate_table THEN RAISE NOTICE 'INDEX "ix_hangfire_jobqueue_jobidandqueue" already exists.';
+    END;
+END;
+$$;
 
 DO $$
 BEGIN

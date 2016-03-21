@@ -22,3 +22,33 @@ ALTER TABLE "list" ADD COLUMN "updatecount" integer NOT NULL DEFAULT 0;
 ALTER TABLE "server" ADD COLUMN "updatecount" integer NOT NULL DEFAULT 0;
 ALTER TABLE "set" ADD COLUMN "updatecount" integer NOT NULL DEFAULT 0;
 ALTER TABLE "state" ADD COLUMN "updatecount" integer NOT NULL DEFAULT 0;
+
+DO $$
+BEGIN
+    BEGIN
+        CREATE INDEX "ix_hangfire_job_expireat" ON "job" ("expireat");
+    EXCEPTION
+        WHEN duplicate_table THEN RAISE NOTICE 'INDEX "ix_hangfire_job_expireat" already exists.';
+    END;
+END;
+$$;
+
+DO $$
+BEGIN
+    BEGIN
+        CREATE INDEX "ix_hangfire_list_expireat" ON "list" ("expireat");
+    EXCEPTION
+        WHEN duplicate_table THEN RAISE NOTICE 'INDEX "ix_hangfire_list_expireat" already exists.';
+    END;
+END;
+$$;
+
+DO $$
+BEGIN
+    BEGIN
+        CREATE INDEX "ix_hangfire_set_expireat" ON "set" ("expireat");
+    EXCEPTION
+        WHEN duplicate_table THEN RAISE NOTICE 'INDEX "ix_hangfire_set_expireat" already exists.';
+    END;
+END;
+$$;
