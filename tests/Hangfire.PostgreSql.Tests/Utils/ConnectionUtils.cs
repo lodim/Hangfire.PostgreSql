@@ -48,7 +48,6 @@ namespace Hangfire.PostgreSql.Tests
             var csb = new NpgsqlConnectionStringBuilder(GetConnectionString())
             {
                 Enlist = false,
-                Pooling = false
             };
             var connection = new NpgsqlConnection(csb.ToString());
             connection.Open();

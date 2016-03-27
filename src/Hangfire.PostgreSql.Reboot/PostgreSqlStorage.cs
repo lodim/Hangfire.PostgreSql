@@ -35,10 +35,7 @@ namespace Hangfire.PostgreSql.Reboot
         private readonly PostgreSqlStorageOptions _options;
         private readonly string _connectionString;
 
-        public PostgreSqlStorage(string nameOrConnectionString)
-            : this(nameOrConnectionString, new PostgreSqlStorageOptions())
-        {
-        }
+        public PostgreSqlStorage(string nameOrConnectionString) : this(nameOrConnectionString, new PostgreSqlStorageOptions()) { }
 
         /// <summary>
         /// Initializes PostgreSqlStorage from the provided PostgreSqlStorageOptions and either the provided connection
@@ -97,8 +94,7 @@ namespace Hangfire.PostgreSql.Reboot
             if (options == null) throw new ArgumentNullException(nameof(options));
             var connectionStringBuilder = new NpgsqlConnectionStringBuilder(existingConnection.ConnectionString);
             if (connectionStringBuilder.Enlist) throw new ArgumentException("Npgsql is not fully compatible with TransactionScope yet, only connections without Enlist = true are accepted.");
-            if (connectionStringBuilder.Pooling) throw new ArgumentException("Npgsql is not fully compatible with connection pooling.");
-            
+
             _existingConnection = existingConnection;
             _options = options;
 
@@ -162,7 +158,9 @@ namespace Hangfire.PostgreSql.Reboot
             var connectionStringBuilder = new NpgsqlConnectionStringBuilder(_connectionString)
             {
                 Enlist = false,         //Npgsql is not fully compatible with TransactionScope yet.
-                Pooling = false,        //http://stackoverflow.com/questions/28202608/timeout-while-getting-a-connection-from-pool-hangfire-postgres
+
+                //http://stackoverflow.com/questions/28202608/timeout-while-getting-a-connection-from-pool-hangfire-postgres
+                Pooling = this._options.UseConnectionPooling,        
             };
             
             var connection = new NpgsqlConnection(connectionStringBuilder.ToString());

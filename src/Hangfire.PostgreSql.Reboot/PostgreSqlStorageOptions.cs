@@ -28,30 +28,27 @@ namespace Hangfire.PostgreSql.Reboot
 
         public PostgreSqlStorageOptions()
         {
-            QueuePollInterval = TimeSpan.FromSeconds(15);
-            InvisibilityTimeout = TimeSpan.FromMinutes(30);
-            SchemaName = "hangfire";
-            UseNativeDatabaseTransactions = true;
-            PrepareSchemaIfNecessary = true;
+            this.QueuePollInterval = TimeSpan.FromSeconds(15);
+            this.InvisibilityTimeout = TimeSpan.FromMinutes(30);
+            this.SchemaName = "hangfire";
+            this.UseNativeDatabaseTransactions = true;
+            this.PrepareSchemaIfNecessary = true;
+            this.UseConnectionPooling = true;
         }
 
         public TimeSpan QueuePollInterval
         {
-            get { return _queuePollInterval; }
+            get { return this._queuePollInterval; }
             set
             {
                 var message = $"The QueuePollInterval property value should be positive. Given: {value}.";
 
                 if (value == TimeSpan.Zero)
-                {
                     throw new ArgumentException(message, nameof(value));
-                }
                 if (value != value.Duration())
-                {
                     throw new ArgumentException(message, nameof(value));
-                }
 
-                _queuePollInterval = value;
+                this._queuePollInterval = value;
             }
         }
 
@@ -59,5 +56,6 @@ namespace Hangfire.PostgreSql.Reboot
         public bool UseNativeDatabaseTransactions { get; set; }
         public bool PrepareSchemaIfNecessary { get; set; }
         public string SchemaName { get; set; }
+        public bool UseConnectionPooling { get; set; }
     }
 }

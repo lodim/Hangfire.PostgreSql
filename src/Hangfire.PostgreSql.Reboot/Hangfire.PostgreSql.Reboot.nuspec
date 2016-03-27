@@ -5,7 +5,7 @@
 		<title>Hangfire.PostgreSql.Reboot</title>
 		<authors>Mihai Bogdan Eugen</authors>
 		<owners>Mihai Bogdan Eugen</owners>
-		<version>1.0.0</version>
+		<version>1.0.1</version>
 		<projectUrl>https://github.com/MihaiBogdanEugen/Hangfire.PostgreSql</projectUrl>
 		<licenseUrl>https://github.com/MihaiBogdanEugen/Hangfire.PostgreSql/blob/master/LICENSE.md</licenseUrl>
 		<tags>Hangfire PostgreSql AspNet MVC OWIN SqlServer Long-Running Background Fire-And-Forget Delayed Recurring Tasks Jobs Scheduler Threading Queues</tags>
@@ -15,8 +15,8 @@
 		<summary>PostgreSql storage implementation for Hangfire (background job system for ASP.NET applications).</summary>
 		<copyright>Copyright &#169; 2016 Mihai Bogdan Eugen</copyright>
 		<releaseNotes>
-		  1.0.0
-		  * Not using connection pooling anymore
+		  1.0.1
+		  * Connection Pooling can be specified as a parameter in PostgreSqlStorageOptions
 		</releaseNotes>
 		<dependencies>
 			<dependency id="Dapper" version="1.42" />
